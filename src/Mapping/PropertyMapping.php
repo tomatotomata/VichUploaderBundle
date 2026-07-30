@@ -69,7 +69,7 @@ final class PropertyMapping
     /**
      * Modifies the file property value for the given object.
      *
-     * @param object   $obj  The object
+     * @param object    $obj  The object
      * @param File|null $file The new file
      *
      * @throws \InvalidArgumentException
