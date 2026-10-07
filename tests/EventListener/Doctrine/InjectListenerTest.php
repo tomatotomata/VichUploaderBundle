@@ -2,6 +2,8 @@
 
 namespace Vich\UploaderBundle\Tests\EventListener\Doctrine;
 
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\Test;
 use Vich\UploaderBundle\EventListener\Doctrine\InjectListener;
 use Vich\UploaderBundle\Tests\DummyEntity;
 
@@ -12,6 +14,7 @@ use Vich\UploaderBundle\Tests\DummyEntity;
  *
  * @extends ListenerTestCase<InjectListener>
  */
+#[AllowMockObjectsWithoutExpectations]
 class InjectListenerTest extends ListenerTestCase
 {
     /**
@@ -27,16 +30,17 @@ class InjectListenerTest extends ListenerTestCase
     /**
      * Test the postLoad method.
      */
-    public function testPostLoad(): void
+    #[Test]
+    public function postLoad(): void
     {
         $this->metadata
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('isUploadable')
             ->with(DummyEntity::class)
             ->willReturn(true);
 
         $this->metadata
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('getUploadableFields')
             ->with(DummyEntity::class, self::MAPPING_NAME)
             ->willReturn([
@@ -44,7 +48,7 @@ class InjectListenerTest extends ListenerTestCase
             ]);
 
         $this->handler
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('inject')
             ->with($this->object, 'field_name');
 
@@ -54,10 +58,11 @@ class InjectListenerTest extends ListenerTestCase
     /**
      * Test that postLoad skips non uploadable entity.
      */
-    public function testPostLoadSkipsNonUploadable(): void
+    #[Test]
+    public function postLoadSkipsNonUploadable(): void
     {
         $this->metadata
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('isUploadable')
             ->with(DummyEntity::class)
             ->willReturn(false);

@@ -2,15 +2,17 @@
 
 namespace Vich\UploaderBundle\Naming;
 
-use Vich\UploaderBundle\Mapping\PropertyMapping;
+use Vich\UploaderBundle\Mapping\PropertyMappingInterface;
 
 /**
  * Directory namer that can create subfolder depends on generated filename.
  *
  * @author Konstantin Myakshin <koc-dp@yandex.ru>
  */
-final class SubdirDirectoryNamer implements DirectoryNamerInterface, ConfigurableInterface
+final class SubdirDirectoryNamer implements DirectoryNamerInterface, ConfigurableInterface, ImmutableConfigurableInterface
 {
+    use ConfigurableNamerTrait;
+
     private int $charsPerDir = 2;
 
     private int $dirs = 1;
@@ -28,7 +30,7 @@ final class SubdirDirectoryNamer implements DirectoryNamerInterface, Configurabl
         $this->dirs = $options['dirs'];
     }
 
-    public function directoryName(object|array $object, PropertyMapping $mapping): string
+    public function directoryName(object|array $object, PropertyMappingInterface $mapping): string
     {
         $fileName = $mapping->getFilename($object);
 

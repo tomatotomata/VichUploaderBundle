@@ -2,21 +2,24 @@
 
 namespace Vich\UploaderBundle\Tests\Metadata;
 
+use PHPUnit\Framework\Attributes\Test;
 use Vich\UploaderBundle\Metadata\CacheWarmer;
 use Vich\UploaderBundle\Tests\TestCase;
 
 final class CacheWarmerTest extends TestCase
 {
-    public function testWarmUp(): void
+    #[Test]
+    public function warmUp(): void
     {
         $reader = $this->getMetadataReaderMock();
-        $reader->expects(self::once())->method('getUploadableClasses')->willReturn([]);
+        $reader->expects($this->once())->method('getUploadableClasses')->willReturn([]);
 
         $warmer = new CacheWarmer(\sys_get_temp_dir(), $reader);
         $warmer->warmUp('foo');
     }
 
-    public function testDoNotWarmUpEmptyDir(): void
+    #[Test]
+    public function doNotWarmUpEmptyDir(): void
     {
         $reader = $this->getMetadataReaderMock();
         $reader->expects($this->never())->method('getUploadableClasses');

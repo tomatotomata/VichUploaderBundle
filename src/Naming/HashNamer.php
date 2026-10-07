@@ -2,16 +2,20 @@
 
 namespace Vich\UploaderBundle\Naming;
 
-use Vich\UploaderBundle\Mapping\PropertyMapping;
+use Vich\UploaderBundle\Mapping\PropertyMappingInterface;
 
 /**
  * Namer that uses hash function from random string for generating names.
  *
  * @author Konstantin Myakshin <koc-dp@yandex.ru>
  */
-class HashNamer implements NamerInterface, ConfigurableInterface
+class HashNamer implements NamerInterface, ConfigurableInterface, ImmutableConfigurableInterface
 {
+    use ConfigurableNamerTrait;
+
     use Polyfill\FileExtensionTrait;
+
+    private static ?\Random\Randomizer $randomizer = null;
 
     private string $algorithm = 'sha1';
 
@@ -34,7 +38,7 @@ class HashNamer implements NamerInterface, ConfigurableInterface
         $this->keepExtension = $options['keep_extension'];
     }
 
-    public function name(object|array $object, PropertyMapping $mapping): string
+    public function name(object|array $object, PropertyMappingInterface $mapping): string
     {
         $file = $mapping->getFile($object);
 
@@ -52,6 +56,10 @@ class HashNamer implements NamerInterface, ConfigurableInterface
 
     protected function getRandomString(): string
     {
-        return \microtime(true).\random_int(0, 9_999_999);
+        // Use PHP 8.3's Randomizer for cryptographically secure random generation
+        // Reuse the same instance for performance
+        self::$randomizer ??= new \Random\Randomizer();
+
+        return \microtime(true).self::$randomizer->getInt(0, 9_999_999);
     }
 }

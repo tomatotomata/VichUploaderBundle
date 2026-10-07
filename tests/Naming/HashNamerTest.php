@@ -3,6 +3,7 @@
 namespace Vich\UploaderBundle\Tests\Naming;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use Vich\UploaderBundle\Naming\HashNamer as BaseHashNamer;
 use Vich\UploaderBundle\Tests\DummyEntity;
 use Vich\UploaderBundle\Tests\TestCase;
@@ -31,11 +32,12 @@ class HashNamerTest extends TestCase
     }
 
     #[DataProvider('fileDataProvider')]
-    public function testNameReturnsTheRightName(string $expectedFileName, string $extension, string $algorithm, ?int $length): void
+    #[Test]
+    public function nameReturnsTheRightName(string $expectedFileName, string $extension, string $algorithm, ?int $length): void
     {
         $file = $this->getUploadedFileMock();
 
-        $file->expects(self::once())
+        $file->expects($this->once())
             ->method('guessExtension')
             ->willReturn($extension);
 
@@ -43,7 +45,7 @@ class HashNamerTest extends TestCase
         $entity->setFile($file);
 
         $mapping = $this->getPropertyMappingMock();
-        $mapping->expects(self::once())
+        $mapping->expects($this->once())
             ->method('getFile')
             ->with($entity)
             ->willReturn($file);

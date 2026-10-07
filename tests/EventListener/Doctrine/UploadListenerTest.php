@@ -2,16 +2,17 @@
 
 namespace Vich\UploaderBundle\Tests\EventListener\Doctrine;
 
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\Test;
 use Vich\UploaderBundle\EventListener\Doctrine\UploadListener;
 use Vich\UploaderBundle\Tests\DummyEntity;
 
 /**
- * Doctrine UploadListener test.
- *
  * @author Kévin Gomez <contact@kevingomez.fr>
  *
  * @extends ListenerTestCase<UploadListener>
  */
+#[AllowMockObjectsWithoutExpectations]
 class UploadListenerTest extends ListenerTestCase
 {
     /**
@@ -27,16 +28,17 @@ class UploadListenerTest extends ListenerTestCase
     /**
      * Tests the prePersist method.
      */
-    public function testPrePersist(): void
+    #[Test]
+    public function prePersist(): void
     {
         $this->metadata
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('isUploadable')
             ->with(DummyEntity::class)
             ->willReturn(true);
 
         $this->metadata
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('getUploadableFields')
             ->with(DummyEntity::class, self::MAPPING_NAME)
             ->willReturn([
@@ -44,7 +46,7 @@ class UploadListenerTest extends ListenerTestCase
             ]);
 
         $this->handler
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('upload')
             ->with($this->object, 'field_name');
 
@@ -54,10 +56,11 @@ class UploadListenerTest extends ListenerTestCase
     /**
      * Tests that prePersist skips non-uploadable entity.
      */
-    public function testPrePersistSkipsNonUploadable(): void
+    #[Test]
+    public function prePersistSkipsNonUploadable(): void
     {
         $this->metadata
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('isUploadable')
             ->with(DummyEntity::class)
             ->willReturn(false);
@@ -72,21 +75,22 @@ class UploadListenerTest extends ListenerTestCase
     /**
      * Test the preUpdate method.
      */
-    public function testPreUpdate(): void
+    #[Test]
+    public function preUpdate(): void
     {
         $this->adapter
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('recomputeChangeSet')
             ->with($this->event);
 
         $this->metadata
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('isUploadable')
             ->with(DummyEntity::class)
             ->willReturn(true);
 
         $this->metadata
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('getUploadableFields')
             ->with(DummyEntity::class, self::MAPPING_NAME)
             ->willReturn([
@@ -94,7 +98,7 @@ class UploadListenerTest extends ListenerTestCase
             ]);
 
         $this->handler
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('upload')
             ->with($this->object, 'field_name');
 
@@ -104,10 +108,11 @@ class UploadListenerTest extends ListenerTestCase
     /**
      * Test that preUpdate skips non uploadable entity.
      */
-    public function testPreUpdateSkipsNonUploadable(): void
+    #[Test]
+    public function preUpdateSkipsNonUploadable(): void
     {
         $this->metadata
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('isUploadable')
             ->with(DummyEntity::class)
             ->willReturn(false);

@@ -4,87 +4,55 @@ namespace Vich\UploaderBundle\Tests\EventListener\Doctrine;
 
 use Doctrine\Persistence\Event\LifecycleEventArgs;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use Vich\UploaderBundle\Adapter\AdapterInterface;
 use Vich\UploaderBundle\EventListener\Doctrine\BaseListener;
-use Vich\UploaderBundle\Handler\UploadHandler;
-use Vich\UploaderBundle\Metadata\MetadataReader;
+use Vich\UploaderBundle\Handler\UploadHandlerInterface;
+use Vich\UploaderBundle\Metadata\MetadataReaderInterface;
 use Vich\UploaderBundle\Tests\DummyEntity;
 use Vich\UploaderBundle\Tests\TestCase;
 
 /**
- * Doctrine listener test case.
- *
  * @author Kévin Gomez <contact@kevingomez.fr>
  *
  * @template T of BaseListener
  */
 abstract class ListenerTestCase extends TestCase
 {
-    public const MAPPING_NAME = 'dummy_mapping';
+    public const string MAPPING_NAME = 'dummy_mapping';
 
     public static bool $usePreUpdateEventArgs = false;
 
-    protected AdapterInterface|MockObject $adapter;
+    protected AdapterInterface&MockObject $adapter;
 
-    protected MetadataReader|MockObject $metadata;
+    protected MetadataReaderInterface&MockObject $metadata;
 
-    protected UploadHandler|MockObject $handler;
+    protected UploadHandlerInterface&MockObject $handler;
 
-    protected LifecycleEventArgs|MockObject $event;
+    protected LifecycleEventArgs&Stub $event;
 
     public DummyEntity|MockObject $object;
 
     /** @var T */
     protected BaseListener $listener;
 
-    /**
-     * Sets up the test.
-     */
     protected function setUp(): void
     {
         $this->adapter = $this->createMock(AdapterInterface::class);
         $this->metadata = $this->getMetadataReaderMock();
-        $this->handler = $this->getUploadHandlerMock();
+        $this->handler = $this->getHandlerMock();
         $this->object = new DummyEntity();
-        $this->event = $this->getEventMock();
+        $this->event = $this->getEventStub();
         $this->event->method('getObject')->willReturn($this->object);
     }
 
-    /**
-     * @return AdapterInterface&MockObject
-     */
-    protected function getAdapterMock(): AdapterInterface
+    protected function getHandlerMock(): UploadHandlerInterface&MockObject
     {
-        return $this->createMock(AdapterInterface::class);
+        return $this->createMock(UploadHandlerInterface::class);
     }
 
-    /**
-     * @return MetadataReader&MockObject
-     */
-    protected function getMetadataReaderMock(): MetadataReader
+    protected function getEventStub(): LifecycleEventArgs&Stub
     {
-        return $this->getMockBuilder(MetadataReader::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-    }
-
-    /**
-     * @return UploadHandler&MockObject
-     */
-    protected function getHandlerMock(): UploadHandler
-    {
-        return $this->getMockBuilder(UploadHandler::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-    }
-
-    /**
-     * @return LifecycleEventArgs&MockObject
-     */
-    protected function getEventMock(): LifecycleEventArgs
-    {
-        return $this->getMockBuilder(LifecycleEventArgs::class)
-            ->disableOriginalConstructor()
-            ->getMock();
+        return $this->createStub(LifecycleEventArgs::class);
     }
 }

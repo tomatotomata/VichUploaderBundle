@@ -1,3 +1,38 @@
+# Upgrading from v3.0 to v3.1
+
+## Changes
+
+* Namers and directory namers are no longer indexed through a `getId()` method. Symfony deprecated
+  the `defaultIndexMethod` argument of tagged iterators in 8.1, so a namer or a directory namer that
+  wants to be referenced by something other than its service id must now carry
+  `#[\Symfony\Component\DependencyInjection\Attribute\AsTaggedItem(index: 'my-namer')]`. Services
+  without that attribute keep being indexed by their service id, which is what `namer` and
+  `directory_namer` reference in practice, so nothing changes for them.
+
+  One difference with `getId()` is worth knowing: Symfony only reads `#[AsTaggedItem]` on
+  autoconfigured definitions. A namer registered with `autoconfigure: false`, or declared in a
+  bundle's own service file where autoconfiguration is off, is indexed by its service id even when
+  it carries the attribute. `getId()` used to apply either way.
+
+## Deprecations
+
+* `ConfigurableInterface` is deprecated in favor of `ImmutableConfigurableInterface`, which declares `withOptions(array $options): static` instead of `configure(array $options): void`. Namer services are shared, so configuring one in place makes every mapping observe the options of the last one resolved. `withOptions()` must return a new instance with independent mutable configuration, preserving service defaults; it is called for every configurable namer, including those inside chains and mappings without options. `ConfigurableNamerTrait` implements it when a shallow clone is enough; see the [custom namer guide](docs/file_namer/howto/create_a_custom_file_namer.md#configurable-custom-namer).
+* Namers implementing only `ConfigurableInterface` keep working, without configuration isolation, until its removal in 4.0. A `configure()` method is still usable for service-level defaults.
+
+# Upgrading from v2.9 to v3.0
+
+## Breaking Changes
+
+* Minimum PHP version raised from `^8.1` to `^8.3`.
+* Minimum Symfony version raised: support for `5.4` and `7.0`-`7.3` has been dropped. Symfony `6.4`, `7.4` and `8.0` are now required.
+* The deprecated `Vich\UploaderBundle\Mapping\Annotation` namespace has been removed. Use `Vich\UploaderBundle\Mapping\Attribute` instead.
+* The deprecated `AnnotationInterface` has been removed. Use `AttributeInterface` instead.
+* Support for annotations has been removed entirely). Use PHP attributes instead.
+* `AttributeReader` deprecated methods have been removed: use `getClassAttribute()` instead of `getClassAnnotation()`, `getPropertyAttribute()` instead of `getPropertyAnnotation()`.
+* `NamerInterface::name()` and `DirectoryNamerInterface::directoryName()` parameter type widened from `object` to `object|array`. Custom namers that type-hint the parameter as `object` must update their signature to match.
+* `PropertyMappingResolverInterface::resolve()` (and the `PropertyMappingResolver` implementation) now returns `PropertyMappingInterface` instead of the concrete `PropertyMapping` class. Code that type-hints against `PropertyMapping` directly should switch to `PropertyMappingInterface`.
+* Several internal classes are now `final` and are only meant to be extended through interfaces: `PropertyMapping`, `PropertyMappingFactory`, `MetadataReader` and `AttributeReader`. New interfaces are provided as extension points: `PropertyMappingInterface`, `PropertyMappingFactoryInterface`, `MetadataReaderInterface` and `UploadHandlerInterface`. Code that extended or mocked these concrete classes should depend on the corresponding interface instead.
+
 # Upgrading from v2.8 to v2.9
 
 ## Deprecations
@@ -13,7 +48,7 @@
 
 # Upgrading from v2.7 to v2.8
 
-* Namers are not public anymore. If you use a custom namer, you can now make it private.
+* Namers are not public anymore. If you uses a custom namer, you can now make it private.
 
 # Upgrading from v2.6 to v2.7
 

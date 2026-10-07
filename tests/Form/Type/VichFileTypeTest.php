@@ -2,48 +2,58 @@
 
 namespace Vich\UploaderBundle\Tests\Form\Type;
 
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
+use Symfony\Component\Form\Extension\HttpFoundation\HttpFoundationExtension;
+use Symfony\Component\Form\Extension\Validator\ValidatorExtension;
 use Symfony\Component\Form\FormConfigInterface;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\Forms;
 use Symfony\Component\Form\FormView;
 use Symfony\Component\Form\PreloadedExtension;
 use Symfony\Component\Form\Test\TypeTestCase;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\PropertyAccess\PropertyAccessor;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\PropertyAccess\PropertyPath;
+use Symfony\Component\Validator\Constraints\File;
+use Symfony\Component\Validator\Validation;
 use Vich\TestBundle\Entity\Product;
 use Vich\UploaderBundle\Form\Type\VichFileType;
-use Vich\UploaderBundle\Handler\UploadHandler;
-use Vich\UploaderBundle\Mapping\PropertyMapping;
-use Vich\UploaderBundle\Mapping\PropertyMappingFactory;
+use Vich\UploaderBundle\Handler\UploadHandlerInterface;
+use Vich\UploaderBundle\Mapping\PropertyMappingFactoryInterface;
+use Vich\UploaderBundle\Mapping\PropertyMappingInterface;
 use Vich\UploaderBundle\Storage\StorageInterface;
 use Vich\UploaderBundle\Tests\TestCaseTrait;
 
+#[AllowMockObjectsWithoutExpectations]
 final class VichFileTypeTest extends TypeTestCase
 {
     use TestCaseTrait;
 
     protected const TESTED_TYPE = VichFileType::class;
 
-    protected StorageInterface|MockObject $storage;
-    protected FormInterface|MockObject $parentForm;
-    protected FormConfigInterface|MockObject $config;
-    protected FormInterface|MockObject $form;
-    protected UploadHandler|MockObject $uploadHandler;
-    protected PropertyMappingFactory|MockObject $propertyMappingFactory;
-    protected PropertyAccessorInterface|MockObject $propertyAccessor;
-    protected PropertyMapping|MockObject $mapping;
+    protected StorageInterface&MockObject $storage;
+    protected FormInterface&Stub $parentForm;
+    protected FormConfigInterface&Stub $config;
+    protected FormInterface&Stub $form;
+    protected UploadHandlerInterface&Stub $uploadHandler;
+    protected PropertyMappingFactoryInterface&MockObject $propertyMappingFactory;
+    protected PropertyAccessorInterface&MockObject $propertyAccessor;
+    protected PropertyMappingInterface&MockObject $mapping;
 
     protected function setUp(): void
     {
         $this->storage = $this->createMock(StorageInterface::class);
-        $this->parentForm = $this->createMock(FormInterface::class);
-        $this->config = $this->createMock(FormConfigInterface::class);
+        $this->parentForm = $this->createStub(FormInterface::class);
+        $this->config = $this->createStub(FormConfigInterface::class);
 
-        $this->form = $this->createMock(FormInterface::class);
+        $this->form = $this->createStub(FormInterface::class);
         $this->form
             ->method('getParent')
             ->willReturn($this->parentForm);
@@ -51,9 +61,7 @@ final class VichFileTypeTest extends TypeTestCase
             ->method('getConfig')
             ->willReturn($this->config);
 
-        $this->uploadHandler = $this->getUploadHandlerMock();
-        $this->storage = $this->createMock(StorageInterface::class);
-        $this->uploadHandler = $this->getUploadHandlerMock();
+        $this->uploadHandler = $this->getUploadHandlerStub();
         $this->propertyMappingFactory = $this->getPropertyMappingFactoryMock();
         $this->propertyAccessor = $this->createMock(PropertyAccessor::class);
         $this->mapping = $this->getPropertyMappingMock();
@@ -61,7 +69,8 @@ final class VichFileTypeTest extends TypeTestCase
         parent::setUp();
     }
 
-    public function testEmptyDownloadLinkDoNotThrowsDeprecation(): void
+    #[Test]
+    public function emptyDownloadLinkDoNotThrowsDeprecation(): void
     {
         $optionsResolver = new OptionsResolver();
 
@@ -78,14 +87,14 @@ final class VichFileTypeTest extends TypeTestCase
     }
 
     #[DataProvider('buildViewDataProvider')]
-    public function testBuildView(?Product $object, array $options, array $vars): void
+    #[Test]
+    public function buildView(?Product $object, array $options, array $vars): void
     {
         $field = 'image';
 
         $this->storage
             ->method('resolveUri')
-            ->with($object, $field)
-            ->willReturn('resolved-uri');
+            ->willReturnMap([[$object, $field, null, 'resolved-uri']]);
 
         $this->parentForm
             ->method('getData')
@@ -325,10 +334,12 @@ final class VichFileTypeTest extends TypeTestCase
         return [
             // register the type instances with the PreloadedExtension
             new PreloadedExtension([$type], []),
+            new HttpFoundationExtension(),
         ];
     }
 
-    public function testWithDeleteField(): void
+    #[Test]
+    public function withDeleteField(): void
     {
         $field = 'image';
 
@@ -336,9 +347,8 @@ final class VichFileTypeTest extends TypeTestCase
         $object->setImageOriginalName('image.jpeg');
         $object->setTitle('Product1');
 
-        // $storage = $this->createMock(StorageInterface::class);
-
         $this->storage
+            ->expects($this->atLeastOnce())
             ->method('resolveUri')
             ->with($object, $field)
             ->willReturn('resolved-uri');
@@ -366,5 +376,62 @@ final class VichFileTypeTest extends TypeTestCase
             self::assertArrayHasKey($key, $deleteFieldView->vars);
             self::assertEquals($var, $deleteFieldView->vars[$key]);
         }
+    }
+
+    #[DataProvider('uploadErrorProvider')]
+    #[Test]
+    public function uploadErrorBubblesToTheVichField(int $errorCode, string $expectedMessage): void
+    {
+        $field = 'image';
+
+        $form = $this->factory->createBuilder(FormType::class, new Product())
+            ->add($field, self::TESTED_TYPE, ['allow_delete' => false])
+            ->getForm();
+
+        $form->submit([$field => ['file' => new UploadedFile(__FILE__, 'test.php', null, $errorCode, true)]]);
+
+        // the error is added by FileType on the inner "file" child, which no theme renders
+        self::assertCount(0, $form[$field]['file']->getErrors());
+
+        $errors = $form[$field]->getErrors();
+        self::assertCount(1, $errors);
+        self::assertSame($expectedMessage, $errors[0]->getMessageTemplate());
+    }
+
+    public static function uploadErrorProvider(): array
+    {
+        return [
+            [\UPLOAD_ERR_INI_SIZE, 'The file is too large. Allowed maximum size is {{ limit }} {{ suffix }}.'],
+            [\UPLOAD_ERR_PARTIAL, 'The file could not be uploaded.'],
+        ];
+    }
+
+    /**
+     * An oversized upload also triggers a File constraint violation. ViolationMapper drops the
+     * bubbled FileUploadError in that case, so only the constraint message must remain.
+     */
+    #[Test]
+    public function uploadErrorIsNotDuplicatedByTheFileConstraint(): void
+    {
+        $field = 'image';
+
+        $factory = Forms::createFormFactoryBuilder()
+            ->addExtensions($this->getExtensions())
+            ->addExtension(new ValidatorExtension(Validation::createValidator()))
+            ->getFormFactory();
+
+        $form = $factory->createBuilder(FormType::class, new Product())
+            ->add($field, self::TESTED_TYPE, [
+                'allow_delete' => false,
+                'constraints' => [new File(maxSize: '1k')],
+            ])
+            ->getForm();
+
+        $form->submit([$field => ['file' => new UploadedFile(__FILE__, 'test.php', null, \UPLOAD_ERR_INI_SIZE, true)]]);
+
+        $errors = $form->getErrors(true);
+        self::assertCount(1, $errors);
+        self::assertSame('The file is too large. Allowed maximum size is {{ limit }} {{ suffix }}.', $errors[0]->getMessageTemplate());
+        self::assertSame($field, $errors[0]->getOrigin()->getName());
     }
 }

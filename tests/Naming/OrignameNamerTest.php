@@ -3,6 +3,7 @@
 namespace Vich\UploaderBundle\Tests\Naming;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use Vich\UploaderBundle\Naming\OrignameNamer;
 use Vich\UploaderBundle\Tests\TestCase;
 
@@ -24,9 +25,10 @@ final class OrignameNamerTest extends TestCase
     }
 
     #[DataProvider('fileDataProvider')]
-    public function testNameReturnsAnUniqueName(string $name, string $ext, string $pattern, bool $transliterate): void
+    #[Test]
+    public function nameReturnsAnUniqueName(string $name, string $ext, string $pattern, bool $transliterate): void
     {
-        $file = $this->getUploadedFileMock();
+        $file = $this->getUploadedFileStub();
         $file
             ->method('getClientOriginalName')
             ->willReturn($name);
@@ -37,7 +39,7 @@ final class OrignameNamerTest extends TestCase
         $entity = new \DateTime();
 
         $mapping = $this->getPropertyMappingMock();
-        $mapping->expects(self::once())
+        $mapping->expects($this->once())
             ->method('getFile')
             ->with($entity)
             ->willReturn($file);

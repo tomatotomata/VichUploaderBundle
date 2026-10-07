@@ -3,6 +3,7 @@
 namespace Vich\UploaderBundle\Tests\Naming;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use Vich\UploaderBundle\Naming\SmartUniqueNamer;
 use Vich\UploaderBundle\Tests\TestCase;
 
@@ -48,7 +49,8 @@ final class SmartUniqidNamerTest extends TestCase
     }
 
     #[DataProvider('fileDataProvider')]
-    public function testNameReturnsAnUniqueName(string $originalName, ?string $guessExtension, string $pattern): void
+    #[Test]
+    public function nameReturnsAnUniqueName(string $originalName, ?string $guessExtension, string $pattern): void
     {
         $file = $this->getUploadedFileMock();
         $file
@@ -57,7 +59,7 @@ final class SmartUniqidNamerTest extends TestCase
         ;
 
         $file
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('guessExtension')
             ->willReturn($guessExtension)
         ;
@@ -65,7 +67,7 @@ final class SmartUniqidNamerTest extends TestCase
         $entity = new \stdClass();
 
         $mapping = $this->getPropertyMappingMock();
-        $mapping->expects(self::once())
+        $mapping->expects($this->once())
             ->method('getFile')
             ->with($entity)
             ->willReturn($file)
@@ -77,7 +79,8 @@ final class SmartUniqidNamerTest extends TestCase
     }
 
     #[DataProvider('fileDataProviderWithKeepExtension')]
-    public function testNameWithKeepExtensionOption(string $originalName, ?string $guessExtension, bool $keepExtension, string $pattern): void
+    #[Test]
+    public function nameWithKeepExtensionOption(string $originalName, ?string $guessExtension, bool $keepExtension, string $pattern): void
     {
         $file = $this->getUploadedFileMock();
         $file
@@ -93,7 +96,7 @@ final class SmartUniqidNamerTest extends TestCase
             ;
         } else {
             $file
-                ->expects(self::once())
+                ->expects($this->once())
                 ->method('guessExtension')
                 ->willReturn($guessExtension)
             ;
@@ -102,7 +105,7 @@ final class SmartUniqidNamerTest extends TestCase
         $entity = new \stdClass();
 
         $mapping = $this->getPropertyMappingMock();
-        $mapping->expects(self::once())
+        $mapping->expects($this->once())
             ->method('getFile')
             ->with($entity)
             ->willReturn($file)
@@ -114,7 +117,8 @@ final class SmartUniqidNamerTest extends TestCase
         self::assertMatchesRegularExpression($pattern, $namer->name($entity, $mapping));
     }
 
-    public function testKeepExtensionTrueOptimizationAvoidsMimeTypeGuessing(): void
+    #[Test]
+    public function keepExtensionTrueOptimizationAvoidsMimeTypeGuessing(): void
     {
         $file = $this->getUploadedFileMock();
         $file
@@ -130,7 +134,7 @@ final class SmartUniqidNamerTest extends TestCase
 
         $entity = new \stdClass();
         $mapping = $this->getPropertyMappingMock();
-        $mapping->expects(self::once())
+        $mapping->expects($this->once())
             ->method('getFile')
             ->with($entity)
             ->willReturn($file)

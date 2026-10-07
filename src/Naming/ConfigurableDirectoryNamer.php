@@ -2,13 +2,15 @@
 
 namespace Vich\UploaderBundle\Naming;
 
-use Vich\UploaderBundle\Mapping\PropertyMapping;
+use Vich\UploaderBundle\Mapping\PropertyMappingInterface;
 
 /**
  * Directory namer that can create subfolder which path is given in the directory namer's options.
  */
-class ConfigurableDirectoryNamer implements DirectoryNamerInterface, ConfigurableInterface
+class ConfigurableDirectoryNamer implements DirectoryNamerInterface, ConfigurableInterface, ImmutableConfigurableInterface
 {
+    use ConfigurableNamerTrait;
+
     private string $directoryPath = '';
 
     /**
@@ -24,7 +26,7 @@ class ConfigurableDirectoryNamer implements DirectoryNamerInterface, Configurabl
         $this->directoryPath = $options['directory_path'];
     }
 
-    public function directoryName(object|array $object, PropertyMapping $mapping): string
+    public function directoryName(object|array $object, PropertyMappingInterface $mapping): string
     {
         return $this->directoryPath;
     }

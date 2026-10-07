@@ -4,6 +4,7 @@ namespace Vich\UploaderBundle\Tests\Metadata\Driver;
 
 use Metadata\Driver\DriverInterface;
 use Metadata\Driver\FileLocatorInterface;
+use PHPUnit\Framework\Attributes\Test;
 use Vich\UploaderBundle\Metadata\Driver\AbstractYamlDriver;
 use Vich\UploaderBundle\Metadata\Driver\YamlDriver;
 
@@ -12,7 +13,8 @@ use Vich\UploaderBundle\Metadata\Driver\YamlDriver;
  */
 final class YamlDriverTest extends FileDriverTestCase
 {
-    public function testInconsistentYamlFile(): void
+    #[Test]
+    public function inconsistentYamlFile(): void
     {
         $this->expectException(\RuntimeException::class);
 
@@ -20,7 +22,7 @@ final class YamlDriverTest extends FileDriverTestCase
 
         $fileLocator = $this->createMock(FileLocatorInterface::class);
         $fileLocator
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('findFileForClass')
             ->with(self::equalTo($rClass), self::equalTo('yaml'))
             ->willReturn('something not null');

@@ -14,8 +14,8 @@ use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\PropertyAccess\PropertyPath;
 use Vich\UploaderBundle\Form\DataTransformer\FileTransformer;
-use Vich\UploaderBundle\Handler\UploadHandler;
-use Vich\UploaderBundle\Mapping\PropertyMappingFactory;
+use Vich\UploaderBundle\Handler\UploadHandlerInterface;
+use Vich\UploaderBundle\Mapping\PropertyMappingFactoryInterface;
 use Vich\UploaderBundle\Storage\StorageInterface;
 
 /**
@@ -29,9 +29,9 @@ class VichFileType extends AbstractType
 
     public function __construct(
         protected readonly StorageInterface $storage,
-        protected readonly UploadHandler $handler,
-        protected readonly PropertyMappingFactory $factory,
-        ?PropertyAccessorInterface $propertyAccessor = null,
+        protected readonly UploadHandlerInterface $handler,
+        protected readonly PropertyMappingFactoryInterface $factory,
+        ?PropertyAccessorInterface $propertyAccessor = null
     ) {
         $this->propertyAccessor = $propertyAccessor ?: PropertyAccess::createPropertyAccessor();
     }
@@ -64,6 +64,9 @@ class VichFileType extends AbstractType
             'label' => $options['label'],
             'attr' => $options['attr'],
             'translation_domain' => $options['translation_domain'],
+            // upload errors (too big file, partial upload, ...) are added by FileType on this child,
+            // where no theme renders them: bubble them up to the vich field, which does render them
+            'error_bubbling' => true,
         ]);
 
         $builder->addModelTransformer(new FileTransformer());

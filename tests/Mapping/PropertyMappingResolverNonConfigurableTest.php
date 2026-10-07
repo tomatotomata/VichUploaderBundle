@@ -2,17 +2,19 @@
 
 namespace Vich\UploaderBundle\Tests\Mapping;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Vich\UploaderBundle\Mapping\PropertyMapping;
+use Vich\UploaderBundle\Mapping\PropertyMappingInterface;
 use Vich\UploaderBundle\Mapping\PropertyMappingResolver;
 use Vich\UploaderBundle\Naming\NamerInterface;
 
 final class PropertyMappingResolverNonConfigurableTest extends TestCase
 {
-    public function testNonConfigurableNamerWithKeepExtensionThrowsException(): void
+    #[Test]
+    public function nonConfigurableNamerWithKeepExtensionThrowsException(): void
     {
         $nonConfigurableNamer = new class() implements NamerInterface {
-            public function name(object|array $object, PropertyMapping $mapping): string
+            public function name(object|array $object, PropertyMappingInterface $mapping): string
             {
                 return 'non_configurable_name.txt';
             }
@@ -44,15 +46,16 @@ final class PropertyMappingResolverNonConfigurableTest extends TestCase
         ];
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Namer non_configurable_namer does not implement ConfigurableInterface but namer_keep_extension option is set to true in mapping "test_mapping"');
+        $this->expectExceptionMessage('Namer non_configurable_namer does not implement ImmutableConfigurableInterface but namer_keep_extension option is set to true in mapping "test_mapping"');
 
         $resolver->resolve($object, 'file', $mappingData);
     }
 
-    public function testNonConfigurableNamerWithKeepExtensionFalseWorksNormally(): void
+    #[Test]
+    public function nonConfigurableNamerWithKeepExtensionFalseWorksNormally(): void
     {
         $nonConfigurableNamer = new class() implements NamerInterface {
-            public function name(object|array $object, PropertyMapping $mapping): string
+            public function name(object|array $object, PropertyMappingInterface $mapping): string
             {
                 return 'non_configurable_name.txt';
             }
@@ -85,7 +88,6 @@ final class PropertyMappingResolverNonConfigurableTest extends TestCase
 
         $mapping = $resolver->resolve($object, 'file', $mappingData);
 
-        self::assertInstanceOf(PropertyMapping::class, $mapping);
         self::assertTrue($mapping->hasNamer());
     }
 }

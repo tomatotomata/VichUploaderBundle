@@ -3,6 +3,7 @@
 namespace Vich\UploaderBundle\Tests\Naming;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Vich\UploaderBundle\Naming\CurrentDateTimeDirectoryNamer;
 use Vich\UploaderBundle\Tests\DummyEntity;
@@ -26,12 +27,13 @@ final class CurrentDateTimeDirectoryNamerTest extends TestCase
     }
 
     #[DataProvider('directoryNameDataProvider')]
-    public function testNameReturnsTheRightName(int $timestamp, ?string $dateTimeFormat, string $expectedName): void
+    #[Test]
+    public function nameReturnsTheRightName(int $timestamp, ?string $dateTimeFormat, string $expectedName): void
     {
         \date_default_timezone_set('UTC');
         $entity = new DummyEntity();
-        $mapping = $this->getPropertyMappingMock();
-        $propertyAccessor = $this->createMock(PropertyAccessorInterface::class);
+        $mapping = $this->getPropertyMappingStub();
+        $propertyAccessor = $this->createStub(PropertyAccessorInterface::class);
         $propertyAccessor->method('getValue')->willReturn(new \DateTime(\date('Y-m-d H:i:s', $timestamp)));
 
         $namer = new CurrentDateTimeDirectoryNamer($propertyAccessor);
@@ -44,12 +46,13 @@ final class CurrentDateTimeDirectoryNamerTest extends TestCase
         self::assertSame($expectedName, $namer->directoryName($entity, $mapping));
     }
 
-    public function testConfigurationFailsIfTheDateFormatIsEmpty(): void
+    #[Test]
+    public function configurationFailsIfTheDateFormatIsEmpty(): void
     {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Option "date_time_format" is empty.');
 
-        $mapping = $this->getPropertyMappingMock();
+        $mapping = $this->getPropertyMappingStub();
         $namer = new CurrentDateTimeDirectoryNamer(null);
 
         $namer->configure(['date_time_format' => '']);
@@ -57,11 +60,12 @@ final class CurrentDateTimeDirectoryNamerTest extends TestCase
         $namer->directoryName(new DummyEntity(), $mapping);
     }
 
-    public function testNameReturnsObjectDate(): void
+    #[Test]
+    public function nameReturnsObjectDate(): void
     {
-        $mapping = $this->getPropertyMappingMock();
+        $mapping = $this->getPropertyMappingStub();
         $propertyAccessor = $this->createMock(PropertyAccessorInterface::class);
-        $propertyAccessor->expects(self::once())->method('getValue')->willReturn(new \DateTime('2018/12/01'));
+        $propertyAccessor->expects($this->once())->method('getValue')->willReturn(new \DateTime('2018/12/01'));
 
         $namer = new CurrentDateTimeDirectoryNamer($propertyAccessor);
         $namer->configure(['date_time_property' => 'getUploadTimestamp']);

@@ -2,15 +2,17 @@
 
 namespace Vich\UploaderBundle\Tests\Naming;
 
+use PHPUnit\Framework\Attributes\Test;
 use Vich\UploaderBundle\Tests\Naming\Fixtures\SimpleNamer;
 use Vich\UploaderBundle\Tests\TestCase;
 
 final class NonConfigurableNamerTest extends TestCase
 {
-    public function testNonConfigurableNamerIgnoresKeepExtensionOption(): void
+    #[Test]
+    public function nonConfigurableNamerIgnoresKeepExtensionOption(): void
     {
         $namer = new SimpleNamer();
-        $file = $this->getUploadedFileMock();
+        $file = $this->getUploadedFileStub();
         $file
             ->method('getClientOriginalName')
             ->willReturn('test.xyz')
@@ -22,7 +24,7 @@ final class NonConfigurableNamerTest extends TestCase
 
         $entity = new \stdClass();
         $mapping = $this->getPropertyMappingMock();
-        $mapping->expects(self::once())
+        $mapping->expects($this->once())
             ->method('getFile')
             ->with($entity)
             ->willReturn($file)

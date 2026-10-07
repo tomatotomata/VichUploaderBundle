@@ -5,14 +5,16 @@ namespace Vich\UploaderBundle\Naming;
 use Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Vich\UploaderBundle\Exception\NameGenerationException;
-use Vich\UploaderBundle\Mapping\PropertyMapping;
+use Vich\UploaderBundle\Mapping\PropertyMappingInterface;
 use Vich\UploaderBundle\Util\Transliterator;
 
 /**
  * @author Kévin Gomez <contact@kevingomez.fr>
  */
-final class PropertyNamer implements NamerInterface, ConfigurableInterface
+final class PropertyNamer implements NamerInterface, ConfigurableInterface, ImmutableConfigurableInterface
 {
+    use ConfigurableNamerTrait;
+
     use Polyfill\FileExtensionTrait;
 
     private string $propertyPath;
@@ -44,7 +46,7 @@ final class PropertyNamer implements NamerInterface, ConfigurableInterface
         $this->keepExtension = isset($options['keep_extension']) ? (bool) $options['keep_extension'] : $this->keepExtension;
     }
 
-    public function name(object|array $object, PropertyMapping $mapping): string
+    public function name(object|array $object, PropertyMappingInterface $mapping): string
     {
         if (empty($this->propertyPath)) {
             throw new \LogicException('The property to use can not be determined. Did you call the configure() method?');

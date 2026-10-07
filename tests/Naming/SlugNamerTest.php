@@ -3,6 +3,7 @@
 namespace Vich\UploaderBundle\Tests\Naming;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use Vich\UploaderBundle\Naming\SlugNamer;
 use Vich\UploaderBundle\Tests\SluggableEntityRepository;
 use Vich\UploaderBundle\Tests\TestCase;
@@ -20,17 +21,18 @@ final class SlugNamerTest extends TestCase
     }
 
     #[DataProvider('fileDataProvider')]
-    public function testNameReturnsAnUniqueName(string $originalName, ?string $guessedExtension, string $pattern): void
+    #[Test]
+    public function nameReturnsAnUniqueName(string $originalName, ?string $guessedExtension, string $pattern): void
     {
         $file = $this->getUploadedFileMock();
         $file
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('getClientOriginalName')
             ->willReturn($originalName)
         ;
 
         $file
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('guessExtension')
             ->willReturn($guessedExtension)
         ;
@@ -38,13 +40,13 @@ final class SlugNamerTest extends TestCase
         $entity = new \stdClass();
 
         $mapping = $this->getPropertyMappingMock();
-        $mapping->expects(self::once())
+        $mapping->expects($this->once())
             ->method('getFile')
             ->with($entity)
             ->willReturn($file)
         ;
 
-        $repo = $this->createMock(SluggableEntityRepository::class);
+        $repo = $this->createStub(SluggableEntityRepository::class);
         $repo
             ->method('findOneBySlug')
             ->willReturnMap([['lala.jpeg', null], ['lala.mp3', new \stdClass()]])

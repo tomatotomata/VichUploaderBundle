@@ -2,46 +2,46 @@
 
 namespace Vich\UploaderBundle\Tests\Injector;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use Vich\UploaderBundle\Injector\FileInjector;
 use Vich\UploaderBundle\Mapping\PropertyMapping;
-use Vich\UploaderBundle\Storage\GaufretteStorage;
+use Vich\UploaderBundle\Storage\StorageInterface;
 use Vich\UploaderBundle\Tests\DummyEntity;
 use Vich\UploaderBundle\Tests\Fixtures\PromotedFileEntity;
 use Vich\UploaderBundle\Tests\TestCase;
 
 /**
- * FileInjectorTest.
- *
  * @author Dustin Dobervich <ddobervich@gmail.com>
  */
 final class FileInjectorTest extends TestCase
 {
-    protected GaufretteStorage|MockObject $storage;
+    protected StorageInterface|MockObject $storage;
 
     protected function setUp(): void
     {
-        $this->storage = $this->createMock(GaufretteStorage::class);
+        $this->storage = $this->createMock(StorageInterface::class);
     }
 
     /**
      * Test inject one file.
      */
-    public function testInjectsOneFile(): void
+    #[Test]
+    public function injectsOneFile(): void
     {
-        $obj = $this->createMock(DummyEntity::class);
+        $obj = $this->createStub(DummyEntity::class);
 
         $fileMapping = $this->getPropertyMappingMock();
         $fileMapping
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('getFilePropertyName')
             ->willReturn('file_field');
         $fileMapping
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('setFile');
 
         $this->storage
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('resolvePath')
             ->with($obj, 'file_field')
             ->willReturn('/uploadDir/file.txt');
@@ -52,16 +52,21 @@ final class FileInjectorTest extends TestCase
 
     /**
      * Test that if the file name property returns a null value
-     * then no file is injected.
+     * then the file property is explicitly initialized to null.
      */
-    public function testPropertyIsNullWhenFileNamePropertyIsNull(): void
+    #[Test]
+    public function propertyIsNullWhenFileNamePropertyIsNull(): void
     {
-        $obj = $this->createMock(DummyEntity::class);
+        $obj = $this->createStub(DummyEntity::class);
 
         $fileMapping = $this->getPropertyMappingMock();
+        $fileMapping
+            ->expects($this->once())
+            ->method('setFile')
+            ->with($obj, null);
 
         $this->storage
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('resolvePath')
             ->willReturn(null);
 
@@ -69,7 +74,8 @@ final class FileInjectorTest extends TestCase
         $inject->injectFile($obj, $fileMapping);
     }
 
-    public function testInitializesNullablePromotedFilePropertyWhenFileNamePropertyIsNull(): void
+    #[Test]
+    public function initializesNullablePromotedFilePropertyWhenFileNamePropertyIsNull(): void
     {
         $obj = (new \ReflectionClass(PromotedFileEntity::class))->newInstanceWithoutConstructor();
         $mapping = new PropertyMapping('file', 'file_name');

@@ -5,6 +5,7 @@ namespace Vich\UploaderBundle\Tests\Form\Type;
 use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresMethod;
+use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Form\FormConfigInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
@@ -146,7 +147,8 @@ final class VichImageTypeTest extends TestCase
 
     #[DataProvider('getLiipImagineBundleIntegrationData')]
     #[RequiresMethod(CacheManager::class, '__construct')]
-    public function testLiipImagineBundleIntegration(
+    #[Test]
+    public function liipImagineBundleIntegration(
         string $field,
         Product $object,
         int $storageResolveMethod,
@@ -163,12 +165,12 @@ final class VichImageTypeTest extends TestCase
             ->with(...\array_values($storageResolveArguments))
             ->willReturn($storageResolvedPath);
 
-        $parentForm = $this->createMock(FormInterface::class);
+        $parentForm = $this->createStub(FormInterface::class);
         $parentForm
             ->method('getData')
             ->willReturn($object);
 
-        $form = $this->createMock(FormInterface::class);
+        $form = $this->createStub(FormInterface::class);
         $form
             ->method('getParent')
             ->willReturn($parentForm);
@@ -176,14 +178,14 @@ final class VichImageTypeTest extends TestCase
             ->method('getName')
             ->willReturn($field);
 
-        $uploadHandler = $this->getUploadHandlerMock();
-        $propertyMappingFactory = $this->getPropertyMappingFactoryMock();
+        $uploadHandler = $this->getUploadHandlerStub();
+        $propertyMappingFactory = $this->getPropertyMappingFactoryStub();
 
-        $propertyAccessor = $this->createMock(PropertyAccessor::class);
+        $propertyAccessor = $this->createStub(PropertyAccessor::class);
         $cacheManager = $this->createMock(CacheManager::class);
 
         $cacheManager
-            ->expects(self::once())
+            ->expects($this->once())
             ->method('getBrowserPath')
             ->with($storageResolvedPath, $imaginePattern)
             ->willReturn($imagineResolvedPath);
@@ -256,7 +258,8 @@ final class VichImageTypeTest extends TestCase
         ];
     }
 
-    public function testLiipImagineBundleIntegrationThrownExceptionIfNotAvailable(): void
+    #[Test]
+    public function liipImagineBundleIntegrationThrownExceptionIfNotAvailable(): void
     {
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('LiipImagineBundle must be installed and configured for using "imagine_pattern" option.');
@@ -265,23 +268,23 @@ final class VichImageTypeTest extends TestCase
 
         $testedType = self::TESTED_TYPE;
 
-        $storage = $this->createMock(StorageInterface::class);
-        $uploadHandler = $this->getUploadHandlerMock();
-        $propertyMappingFactory = $this->getPropertyMappingFactoryMock();
-        $propertyAccessor = $this->createMock(PropertyAccessor::class);
+        $storage = $this->createStub(StorageInterface::class);
+        $uploadHandler = $this->getUploadHandlerStub();
+        $propertyMappingFactory = $this->getPropertyMappingFactoryStub();
+        $propertyAccessor = $this->createStub(PropertyAccessor::class);
 
-        $parentForm = $this->createMock(FormInterface::class);
+        $parentForm = $this->createStub(FormInterface::class);
         $parentForm
             ->method('getData')
             ->willReturn($object);
 
-        $form = $this->createMock(FormInterface::class);
+        $form = $this->createStub(FormInterface::class);
         $form
             ->method('getParent')
             ->willReturn($parentForm);
         $form
             ->method('getConfig')
-            ->willReturn($this->createMock(FormConfigInterface::class));
+            ->willReturn($this->createStub(FormConfigInterface::class));
 
         $view = new FormView();
         $type = new $testedType($storage, $uploadHandler, $propertyMappingFactory, $propertyAccessor);

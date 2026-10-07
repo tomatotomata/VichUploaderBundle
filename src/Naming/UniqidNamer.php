@@ -2,13 +2,15 @@
 
 namespace Vich\UploaderBundle\Naming;
 
-use Vich\UploaderBundle\Mapping\PropertyMapping;
+use Vich\UploaderBundle\Mapping\PropertyMappingInterface;
 
 /**
  * @author Emmanuel Vella <vella.emmanuel@gmail.com>
  */
-final class UniqidNamer implements NamerInterface, ConfigurableInterface
+final class UniqidNamer implements NamerInterface, ConfigurableInterface, ImmutableConfigurableInterface
 {
+    use ConfigurableNamerTrait;
+
     use Polyfill\FileExtensionTrait;
 
     private bool $keepExtension = false;
@@ -18,7 +20,7 @@ final class UniqidNamer implements NamerInterface, ConfigurableInterface
         $this->keepExtension = isset($options['keep_extension']) ? (bool) $options['keep_extension'] : $this->keepExtension;
     }
 
-    public function name(object|array $object, PropertyMapping $mapping): string
+    public function name(object|array $object, PropertyMappingInterface $mapping): string
     {
         $file = $mapping->getFile($object);
         $name = \str_replace('.', '', \uniqid('', true));

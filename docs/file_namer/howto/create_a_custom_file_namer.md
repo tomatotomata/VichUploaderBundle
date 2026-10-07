@@ -7,8 +7,6 @@ free to get any information from it to create the name, or inject any other
 service you require.
 
 > [!NOTE]
-> The `name` method in the interface accepts only objects, but your namer should accept both
-> objects and arrays. The interface method signature will be fixed in the next major version.
 > The name returned should include the file extension as well. This can easily
 > be retrieved from the `UploadedFile` instance using the `getExtension` or `guessExtension`
 > depending on what version of PHP you are running.
@@ -22,12 +20,12 @@ Here's a simple example:
 
 namespace App\Naming;
 
-use Vich\UploaderBundle\Mapping\PropertyMapping;
+use Vich\UploaderBundle\Mapping\PropertyMappingInterface;
 use Vich\UploaderBundle\Naming\NamerInterface;
 
 class MyNamer implements NamerInterface
 {
-    public function name(object|array $object, PropertyMapping $mapping): string
+    public function name(object|array $object, PropertyMappingInterface $mapping): string
     {
         $file = $mapping->getFile($object);
         $originalName = $file->getClientOriginalName();
@@ -41,19 +39,20 @@ class MyNamer implements NamerInterface
 ## Configurable Custom Namer
 
 If you want your namer to support configuration options (including the `namer_keep_extension` option),
-implement the `Vich\UploaderBundle\Naming\ConfigurableInterface`:
+implement the `Vich\UploaderBundle\Naming\ImmutableConfigurableInterface`:
 
 ```php
 <?php
 
 namespace App\Naming;
 
-use Vich\UploaderBundle\Mapping\PropertyMapping;
-use Vich\UploaderBundle\Naming\ConfigurableInterface;
+use Vich\UploaderBundle\Mapping\PropertyMappingInterface;
+use Vich\UploaderBundle\Naming\ImmutableConfigurableInterface;
 use Vich\UploaderBundle\Naming\NamerInterface;
 
-class MyConfigurableNamer implements NamerInterface, ConfigurableInterface
+class MyConfigurableNamer implements NamerInterface, ImmutableConfigurableInterface
 {
+    use \Vich\UploaderBundle\Naming\ConfigurableNamerTrait;
     use \Vich\UploaderBundle\Naming\Polyfill\FileExtensionTrait;
 
     private bool $keepExtension = false;
@@ -65,7 +64,7 @@ class MyConfigurableNamer implements NamerInterface, ConfigurableInterface
         $this->prefix = $options['prefix'] ?? $this->prefix;
     }
 
-    public function name(object|array $object, PropertyMapping $mapping): string
+    public function name(object|array $object, PropertyMappingInterface $mapping): string
     {
         $file = $mapping->getFile($object);
         $extension = $this->getExtensionWithOption($file, $this->keepExtension);
@@ -76,6 +75,23 @@ class MyConfigurableNamer implements NamerInterface, ConfigurableInterface
     }
 }
 ```
+
+`withOptions()` is the only method the interface declares. The bundle calls it for each mapping,
+including mappings without options, to get a separate configured instance. `ConfigurableNamerTrait`
+implements it by cloning the service and calling `configure()` on the copy; that method is no
+longer required, but stays useful for service-level defaults.
+
+The trait fits this example's scalar properties. Copy mutable configuration objects in
+`__clone()`, or implement `withOptions()` yourself — note that a `readonly` property does not make
+its contents immutable, and a service that cannot be cloned can build a new instance instead.
+Decorators must also copy the inner namer, e.g. `$this->inner->withOptions($options)`. Always
+return a new instance, leaving the source and earlier copies untouched: returning `$this` throws
+a `LogicException`.
+
+The older `ConfigurableInterface`, declaring `configure(array $options): void`, is deprecated
+since 3.1 and will be removed in 4.0. Namers implementing only that interface still get their
+options, but the bundle configures the shared service itself, so every mapping using it ends up
+with the options of the last one resolved.
 
 With a configurable namer, you can use options in your configuration:
 
@@ -107,4 +123,4 @@ Where `App\Naming\MyNamer` is the configured service class.
 ## That was it!
 
 Check out the docs for information on how to use the bundle! [Return to the
-index.](/docs/index.md)
+index.](../../index.md)
